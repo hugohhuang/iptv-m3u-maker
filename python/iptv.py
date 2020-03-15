@@ -24,10 +24,10 @@ class Iptv (object):
         self.DB.chkTable()
 
         Base = base.Source()
-        Base.getSource()
+        # Base.getSource()
 
         Dotpy = dotpy.Source()
-        Dotpy.getSource()
+        # Dotpy.getSource()
 
         listB = listb.Source()
         listB.getSource()
@@ -44,27 +44,21 @@ class Iptv (object):
             (SELECT * FROM %s WHERE online = 1 ORDER BY delay DESC) AS delay
             GROUP BY LOWER(delay.title)
             HAVING delay.title != '' and delay.title != 'CCTV-' AND delay.delay < 500
-            ORDER BY level ASC, length(title) ASC, title ASC
+            ORDER BY gp ASC, length(title) ASC, title ASC, quality ASC
             """ % (self.DB.table)
         result = self.DB.query(sql)
 
         with open(os.path.join(os.path.dirname(os.path.abspath(__file__)).replace('python', 'http'), 'tv.m3u'), 'w') as f:
             f.write("#EXTM3U\n")
             for item in result :
-                className = '其他频道'
-                if item[4] == 1 :
-                    className = '中央频道'
-                elif item[4] == 2 :
-                    className = '地方频道'
-                elif item[4] == 3 :
-                    className = '地方频道'
-                elif item[4] == 7 :
-                    className = '广播频道'
-                else :
-                    className = '其他频道'
+                className = item[1]
+                title = item[2]
+                quality = item[3]
+                if quality!= '':
+                    title = title + '【'+quality+'】'
 
-                f.write("#EXTINF:-1, group-title=\"%s\", %s\n" % (className, item[1]))
-                f.write("%s\n" % (item[3]))
+                f.write("#EXTINF:-1, group-title=\"%s\", %s\n" % (className, item[2]))
+                f.write("%s\n" % (item[4]))
 
     def outJson (self) :
         self.T.logger("正在生成Json文件")
@@ -86,16 +80,16 @@ class Iptv (object):
 
         for item in result :
             tmp = {
-                'title': item[1],
-                'url': item[3]
+                'title': item[2],
+                'url': item[4]
             }
-            if item[4] == 1 :
+            if item[5] == 1 :
                 fmtList['cctv'].append(tmp)
-            elif item[4] == 2 :
+            elif item[5] == 2 :
                 fmtList['local'].append(tmp)
-            elif item[4] == 3 :
+            elif item[5] == 3 :
                 fmtList['local'].append(tmp)
-            elif item[4] == 7 :
+            elif item[5] == 7 :
                 fmtList['radio'].append(tmp)
             else :
                 fmtList['other'].append(tmp)

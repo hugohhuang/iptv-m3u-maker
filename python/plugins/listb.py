@@ -17,18 +17,19 @@ class Source (object) :
     def getSource (self) :
         urlList = []
 
-        url = self.siteUrl
+        url = self.siteUrl + '?act=home'
         req = [
             'user-agent: Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.86 Mobile Safari/537.36',
         ]
         res = self.T.getPage(url, req)
 
         if res['code'] == 200 :
-            pattern = re.compile(r"<li><a href=\"(.*?)\" data-ajax=\"false\">.*?<\/a><\/li>", re.I|re.S)
+            pattern = re.compile(r"<li><a href=\"(.*?)\" data-ajax=\"false\">(.*?)<\/a><\/li>", re.I|re.S)
             postList = pattern.findall(res['body'])
 
             for post in postList :
-                url = self.siteUrl + post
+                self.T.logger('正在分析[ %s ]: %s' % (post[1], post[0]))
+                url = self.siteUrl + post[0]
                 req = [
                     'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36',
                 ]
@@ -41,7 +42,7 @@ class Source (object) :
 
                     for channel in channelList :
                         channelUrl = self.siteUrl + channel[0]
-                        thread = threading.Thread(target = self.detectData, args = (channel[1], channelUrl, ), daemon = True)
+                        thread = threading.Thread(target = self.detectData, args = (post[1],channel[1], channelUrl, ), daemon = True)
                         thread.start()
                         threads.append(thread)
 
@@ -51,7 +52,7 @@ class Source (object) :
                 else :
                     pass # MAYBE later :P
 
-    def detectData (self, title, url) :
+    def detectData (self,group, title, url) :
         req = [
             'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36',
         ]
@@ -85,6 +86,7 @@ class Source (object) :
                         if netstat > 0 :
                             cros = 1 if self.T.chkCros(m3u) else 0
                             data = {
+                                'gp'  : str(group),
                                 'title'  : str(info['id']) if info['id'] != '' else str(info['title']),
                                 'url'    : str(m3u),
                                 'quality': str(info['quality']),
@@ -95,7 +97,7 @@ class Source (object) :
                                 'udTime' : self.now,
                             }
                             self.addData(data)
-                            self.T.logger('正在分析[ %s ]: %s' % (str(info['id']) + str(info['title']), m3u))
+
                         else :
                             pass # MAYBE later :P
 

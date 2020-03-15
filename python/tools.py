@@ -125,7 +125,7 @@ class Tools (object) :
         pattern = re.compile(r"<.*?>", re.I)
         channeTitle = re.sub(pattern, "", channeTitle)
 
-        pattern = re.compile(r"(fhd|hd|sd)", re.I)
+        pattern = re.compile(r"(uhd|fhd|hd|sd)", re.I)
         tmp = pattern.findall(channeTitle)
         quality = ''
         if len(tmp) > 0 :
